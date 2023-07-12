@@ -1,36 +1,36 @@
 import 'package:appwrite/appwrite.dart';
+import 'package:appwrite/models.dart' as model;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import '/constants/constants.dart';
-import '/core/core.dart';
-import '/models/user_model.dart';
-
-final userApiProvider = Provider((ref) {
-  return UserAPI(db: ref.watch(appwriteDatabaseProvider));
-});
+@@ -11,6 +12,7 @@ final userApiProvider = Provider((ref) {
 
 abstract class IUserAPI {
   FutureEitherVoid saveUserData(UserModel userModel);
+  Future<model.Document> getUserData(String uid);
 }
 
 class UserAPI implements IUserAPI {
-  final Databases _db;
-  UserAPI({required Databases db}) : _db = db;
-
-  @override
-  FutureEitherVoid saveUserData(UserModel userModel) async {
-    try {
+@@ -23,7 +25,7 @@ class UserAPI implements IUserAPI {
       await _db.createDocument(
         databaseId: AppwriteConstants.databaseId,
         collectionId: AppwriteConstants.usersCollection,
         documentId: ID.unique(),
+        documentId: userModel.uid,
         data: userModel.toMap(),
       );
       return right(null);
-    } on AppwriteException catch (e, stackTrace) {
-      return left(Failure(e.message ?? 'Some unexpected error', stackTrace));
-    } catch (e, stackTrace) {
+@@ -33,4 +35,13 @@ class UserAPI implements IUserAPI {
       return left(Failure(e.toString(), stackTrace));
     }
+  }
+
+  @override
+  Future<model.Document> getUserData(String uid) {
+    return _db.getDocument(
+        databaseId: AppwriteConstants.databaseId,
+        collectionId: AppwriteConstants.usersCollection,
+        documentId: uid,
+      );
   }
 }
